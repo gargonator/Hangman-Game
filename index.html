@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Bhaskar's Hangman Game</title>
+	<script src="https://code.jquery.com/jquery.js"></script>
+</head>
+<body>
+	<h1>Hangman</h1>
+	<p>Press any key to get started.</p>
+	<p>Number of wins: <span id="win-count">0</span></p>
+	<p>Word to guess</p>
+	<p id="word-to-guess">_ _ _ _ _ _</p>
+	<p>Number of guesses remaining: <span id="guesses-remaining"></span></p>
+	<p>Letters already guessed: <span id="guessed-letters"></span></p>
+	<button id="reset">Reset Game</button>
+
+
+	<script type=text/javascript>
+
+		var wordList = ["SHIGETO","STAVROS"];
+		var guessesAllowed = 6;
+		var alphabet = createAlphabet();
+
+		function createAlphabet() {
+			var alphabet_array = [];
+			for (var i = 65; i <= 90; i++) {
+				alphabet_array.push(String.fromCharCode(i));
+			}
+			return alphabet_array;
+		}
+
+		var Hangman = {
+			"numWins":0,
+			"guessesRemaining":guessesAllowed,
+			"lettersGuessed":[],
+			"wordsGuessed":0,
+			"wordArray": [],
+			currentWord: function () {
+				return wordList[this.wordsGuessed];
+			},
+			initializeWordArray: function() {
+				for (var i = 0; i < this.currentWord().length; i++) {
+					this.wordArray.push("_");
+				}
+			},
+			updateWordArray: function(letter) {
+				letterIndex = this.currentWord().indexOf(letter);
+				this.wordArray[letterIndex] = letter;
+			},
+			displayWord: function() {
+				return this.array.join(" ");
+			},
+			winState: function() {
+				return !this.wordArray.includes("_");
+			},
+			reset: function() {
+				this.numWins = 0;
+				this.guessesRemaining = guessesAllowed;
+				this.wordsGuessed = 0;
+			},
+		};
+
+		function playGame() {
+
+			Hangman.initializeWordArray();
+
+			$(document).keyup(function(e) {
+				var currentWord = Hangman.currentWord();
+				var guess = String.fromCharCode(e.which);
+				var letterIndex = currentWord.indexOf(e.which);
+
+				// if guessed letter is not in the alphabet
+				if (alphabet.indexOf(guess) === -1) { 
+					null;  
+				}
+				// if guessed letter has already been guessed
+				else if (Hangman.lettersGuessed.indexOf(guess) != -1) { 
+					null;
+				}
+				// if guessed letter is in the current word
+				else if (Hangman.currentWord().indexOf(guess) != -1) {
+					Hangman.updateWordArray(guess);
+				}
+				// if guessed letter is not in current word
+				else {
+					Hangman.lettersGuessed.push(guess);
+					Hangman.guessesRemaining--;
+				}
+
+				if (Hangman.guessesRemaining === 0) {
+					alert("Sorry, you're out of luck! Try again.");
+					Hangman.reset();
+				}
+
+				console.log("Guess: ",guess);
+				console.log("Word array: ",Hangman.wordArray);
+				console.log("Letters guessed: ",Hangman.lettersGuessed);
+				console.log("Guesses remaining: ",Hangman.guessesRemaining);
+				console.log("Game won?: ",Hangman.winState());
+
+		})
+
+	};
+
+		
+		playGame();
+
+
+	</script>
+
+</body>
+</html>
