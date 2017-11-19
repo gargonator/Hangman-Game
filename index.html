@@ -3,23 +3,27 @@
 <head>
 	<title>Bhaskar's Hangman Game</title>
 	<script src="https://code.jquery.com/jquery.js"></script>
+	<link src="assets/css/style.css" type="text/css">
 </head>
 <body>
 	<h1>Hangman</h1>
 	<p>Press any key to get started.</p>
 	<p>Number of wins: <span id="win-count">0</span></p>
+	<p id="correct-guess"></p>
 	<p>Word to guess</p>
-	<p id="word-to-guess">_ _ _ _ _ _</p>
+	<p id="word-to-guess"></p>
 	<p>Number of guesses remaining: <span id="guesses-remaining"></span></p>
 	<p>Letters already guessed: <span id="guessed-letters"></span></p>
 	<button id="reset">Reset Game</button>
+	<img id="hangman-image" src="#">
 
 
 	<script type=text/javascript>
 
-		var wordList = ["SHIGETO","STAVROS"];
-		var guessesAllowed = 6;
-		var alphabet = createAlphabet();
+		var wordList = ["SHIGETO","STAVROS"]; // list of words for the game
+		var maxWins = wordList.length; // maximum number of wins
+		var guessesAllowed = 6; // number of guesses allowed per word
+		var alphabet = createAlphabet(); // array to check if guessed letter is in alphabet
 
 		function createAlphabet() {
 			var alphabet_array = [];
@@ -29,6 +33,10 @@
 			return alphabet_array;
 		}
 
+		function imageServer(guessesRemaining) {
+			return "assets/images/Hangman-" + (guessesAllowed-guessesRemaining).toString() + ".png";
+		}
+
 		var Hangman = {
 			"numWins":0,
 			"guessesRemaining":guessesAllowed,
@@ -36,33 +44,47 @@
 			"wordsGuessed":0,
 			"wordArray": [],
 			currentWord: function () {
-				return wordList[this.wordsGuessed];
+				return wordList[this.numWins];
 			},
 			initializeWordArray: function() {
+				this.wordArray = [];
 				for (var i = 0; i < this.currentWord().length; i++) {
 					this.wordArray.push("_");
 				}
 			},
 			updateWordArray: function(letter) {
-				letterIndex = this.currentWord().indexOf(letter);
-				this.wordArray[letterIndex] = letter;
+				for (var i = 0; i < this.currentWord().length; i++) {
+					if (letter === this.currentWord()[i]) {
+						this.wordArray[i] = letter;
+					}
+				}
 			},
 			displayWord: function() {
-				return this.array.join(" ");
+				return this.wordArray.join(" ");
 			},
 			winState: function() {
 				return !this.wordArray.includes("_");
 			},
 			reset: function() {
-				this.numWins = 0;
 				this.guessesRemaining = guessesAllowed;
 				this.wordsGuessed = 0;
+				this.lettersGuessed = [];
+				this.initializeWordArray();
 			},
 		};
 
 		function playGame() {
 
+			function updateDisplay() {
+				$("#win-count").html(Hangman.numWins);
+				$("#guesses-remaining").html(Hangman.guessesRemaining);
+				$("#word-to-guess").html(Hangman.displayWord());
+				$("#guessed-letters").html(Hangman.lettersGuessed.join(", "));
+				$("#hangman-image").attr("src",imageServer(Hangman.guessesRemaining));
+			}
+
 			Hangman.initializeWordArray();
+
 
 			$(document).keyup(function(e) {
 				var currentWord = Hangman.currentWord();
@@ -80,17 +102,35 @@
 				// if guessed letter is in the current word
 				else if (Hangman.currentWord().indexOf(guess) != -1) {
 					Hangman.updateWordArray(guess);
+					console.log(Hangman.wordArray)
 				}
 				// if guessed letter is not in current word
 				else {
 					Hangman.lettersGuessed.push(guess);
 					Hangman.guessesRemaining--;
 				}
-
+				// if player has run out of guesses
 				if (Hangman.guessesRemaining === 0) {
+					updateDisplay();
 					alert("Sorry, you're out of luck! Try again.");
 					Hangman.reset();
 				}
+				// if the word has been correctly guessed
+				if (Hangman.winState() === true) {
+					$("#correct-guess").html("Last word guessed: " + Hangman.currentWord())
+					if (Hangman.numWins+1 < maxWins) {
+						Hangman.numWins++;
+						Hangman.reset();
+					}
+					else {
+						alert("You've correctly guessed all the words! Game will be reset");
+						Hangman.reset();
+						Hangman.numWins = 0;
+					}
+
+				}
+
+				updateDisplay();
 
 				console.log("Guess: ",guess);
 				console.log("Word array: ",Hangman.wordArray);
@@ -100,10 +140,18 @@
 
 		})
 
+		$("#reset").on("click", function() {
+			Hangman.reset();
+			Hangman.numWins = 0;
+			Hangman.initializeWordArray();
+
+			updateDisplay();
+		})
+
 	};
 
 		
-		playGame();
+	playGame();
 
 
 	</script>
