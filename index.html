@@ -3,19 +3,34 @@
 <head>
 	<title>Bhaskar's Hangman Game</title>
 	<script src="https://code.jquery.com/jquery.js"></script>
-	<link src="assets/css/style.css" type="text/css">
+	<!-- <link src="assets/css/reset.css" rel="stylesheet"> -->
+	<link href="assets/css/style.css" rel="stylesheet" type="text/css">
+	<link href="https://fonts.googleapis.com/css?family=EB+Garamond:400,400i,500,500i|Spectral+SC:400,500" rel="stylesheet">
 </head>
 <body>
-	<h1>Hangman</h1>
-	<p>Press any key to get started.</p>
-	<p>Number of wins: <span id="win-count">0</span></p>
-	<p id="correct-guess"></p>
-	<p>Word to guess</p>
-	<p id="word-to-guess"></p>
-	<p>Number of guesses remaining: <span id="guesses-remaining"></span></p>
-	<p>Letters already guessed: <span id="guessed-letters"></span></p>
-	<button id="reset">Reset Game</button>
-	<img id="hangman-image" src="#">
+
+	<header>
+		<h1>Hangman</h1>
+	</header>
+
+	<div class="container">
+
+		<aside id="aside-left">
+			<img id="hangman-image" src="#">
+		</aside>
+
+		<section>
+			<p id="instructions"></p>
+			<p id="word-to-guess"></p>
+			<p id="guess-tracker">Letters already guessed: <span id="guessed-letters"></span></p>
+		</section>
+
+		<aside id="aside-right">
+			<p>Number of wins: <span id="win-count">0</span></p>
+			<p id="correct-guess"></p>
+			<p>Guesses remaining: <span id="guesses-remaining"></span></p>
+			<button id="reset">Reset Game</button>
+		</aside>
 
 
 	<script type=text/javascript>
@@ -84,6 +99,8 @@
 			}
 
 			Hangman.initializeWordArray();
+			updateDisplay();
+			$("#instructions").html("Press any key to get started.");
 
 
 			$(document).keyup(function(e) {
@@ -93,27 +110,29 @@
 
 				// if guessed letter is not in the alphabet
 				if (alphabet.indexOf(guess) === -1) { 
-					null;  
+					$("#instructions").html("Only guesses in the standard alphabet are allowed."); 
 				}
 				// if guessed letter has already been guessed
 				else if (Hangman.lettersGuessed.indexOf(guess) != -1) { 
-					null;
+					$("#instructions").html("You've already guessed that letter. Please guess another letter.");
 				}
 				// if guessed letter is in the current word
 				else if (Hangman.currentWord().indexOf(guess) != -1) {
 					Hangman.updateWordArray(guess);
-					console.log(Hangman.wordArray)
+					$("#instructions").html("Nice job!");
 				}
 				// if guessed letter is not in current word
 				else {
 					Hangman.lettersGuessed.push(guess);
+					$("#instructions").html("Try again.");
 					Hangman.guessesRemaining--;
 				}
 				// if player has run out of guesses
 				if (Hangman.guessesRemaining === 0) {
 					updateDisplay();
 					alert("Sorry, you're out of luck! Try again.");
-					Hangman.reset();
+					window.setTimeout(function() {Hangman.reset(); updateDisplay();
+					$("#instructions").html("Press any key to get started.");}, 2000);
 				}
 				// if the word has been correctly guessed
 				if (Hangman.winState() === true) {
@@ -121,9 +140,10 @@
 					if (Hangman.numWins+1 < maxWins) {
 						Hangman.numWins++;
 						Hangman.reset();
+						$("#instructions").html("Press any key to get started.");
 					}
 					else {
-						alert("You've correctly guessed all the words! Game will be reset");
+						alert("You've correctly guessed all the words! Game will be reset.");
 						Hangman.reset();
 						Hangman.numWins = 0;
 					}
@@ -151,7 +171,7 @@
 	};
 
 		
-	playGame();
+	$(document).ready(playGame);
 
 
 	</script>
