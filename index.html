@@ -37,6 +37,10 @@
 			<button id="reset">Reset Game</button>
 		</aside>
 
+		<div class="define">
+			<p id="definition-last"></p>
+		</div>
+
 		<footer>
 			<p>&copy 2017 B. Garg</p>
 		</footer>
@@ -72,6 +76,7 @@
 			"wordArray": [],
 			"wordList_copy": wordList.slice(),
 			"currentWord": "",
+			"lastWord": "",
 			initializeWordArray: function() { // creates a new word array for display
 				this.wordArray = [];
 				for (var i = 0; i < this.currentWord.length; i++) {
@@ -112,6 +117,7 @@
 				this.numWins = 0;
 				this.wordList_copy = wordList.slice();
 				$("#instructions").html("Press any key to get started.");
+				$("#definition-last").html("");
 			},
 			newGame: function() { // starts up a new game with a new word
 				this.guessesRemaining = guessesAllowed;
@@ -153,14 +159,20 @@
 				}
 				// if player has run out of guesses, start up a new game and set wins to 0
 				if (Hangman.guessesRemaining === 0) {
+					Hangman.lastWord = Hangman.currentWord;
 					Hangman.updateDisplay();
 					alert("Sorry, you're out of luck! The word was "+Hangman.currentWord+"."); 
 					Hangman.reset();
 					Hangman.newGame();
+					$("#correct-guess").html("Previous word:" + "<br>" + Hangman.lastWord);
+					$("#definition-last").html(Hangman.lastWord.charAt(0) + Hangman.lastWord.slice(1).toLowerCase() + ": " + words[Hangman.lastWord.toLowerCase()]);
+
 				}
 				// if the word has been correctly guessed, increase win count and start up a new game
 				if (Hangman.winState() === true) {
-					$("#correct-guess").html("Last word guessed: " + Hangman.currentWord);
+					Hangman.lastWord = Hangman.currentWord;
+					$("#correct-guess").html("Previous word:" + "<br>" + Hangman.lastWord);
+					$("#definition-last").html(Hangman.lastWord.charAt(0) + Hangman.lastWord.slice(1).toLowerCase() + ": " + words[Hangman.lastWord.toLowerCase()]);
 					if (Hangman.numWins+1 < maxWins) {
 						Hangman.numWins++;
 						Hangman.newGame();
@@ -184,6 +196,7 @@
 		// resets the game
 		$("#reset").on("click", function() {
 			alert("The word was " + Hangman.currentWord + ".");
+			$("#correct-guess").html("Previous word:" + "<br>" + Hangman.lastWord);
 			Hangman.newGame();
 			Hangman.reset();
 			Hangman.updateDisplay();

@@ -85,14 +85,18 @@ footer p {
 	font-style: normal;
 }
 
-#guess-tracker, #definition {
+#guess-tracker {
 	font-family: "EB Garamond",serif;
 	font-size:18px;
 	margin-top:20px;
 	font-style:normal;
 }
 
-#definition {
+#definition, #definition-last {
 	line-height: 50px;
 	vertical-align: middle;
+}
+
+#definition-last {
+	color:rgb(200,200,200);
 }
