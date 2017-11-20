@@ -3,8 +3,9 @@
 <head>
 	<title>Bhaskar's Hangman Game</title>
 	<script src="https://code.jquery.com/jquery.js"></script>
-	<!-- <link src="assets/css/reset.css" rel="stylesheet"> -->
+	<!-- <link href="assets/css/reset.css" rel="stylesheet" type="text/css"> -->
 	<link href="assets/css/style.css" rel="stylesheet" type="text/css">
+	<script src="assets/javascript/words.js" type="text/javascript"></script>
 	<link href="https://fonts.googleapis.com/css?family=EB+Garamond:400,400i,500,500i|Spectral+SC:400,500" rel="stylesheet">
 </head>
 <body>
@@ -14,6 +15,10 @@
 	</header>
 
 	<div class="container">
+
+		<div class="define">
+			<p id="definition"></p>
+		</div>
 
 		<aside id="aside-left">
 			<img id="hangman-image" src="#">
@@ -32,14 +37,19 @@
 			<button id="reset">Reset Game</button>
 		</aside>
 
+		<footer>
+			<p>&copy 2017 B. Garg</p>
+		</footer>
+
 
 	<script type=text/javascript>
 
-		var wordList = ["SHIGETO","STAVROS"]; // list of words for the game
+		var wordList = Object.keys(words).map(function(word) { return word.toUpperCase();}); // list of words for the game
 		var maxWins = wordList.length; // maximum number of wins
 		var guessesAllowed = 6; // number of guesses allowed per word
 		var alphabet = createAlphabet(); // array to check if guessed letter is in alphabet
 
+		// returns an array with the 26 standard characters in the alphabet, uppercase
 		function createAlphabet() {
 			var alphabet_array = [];
 			for (var i = 65; i <= 90; i++) {
@@ -48,130 +58,148 @@
 			return alphabet_array;
 		}
 
+		// returns a hangman image based on the number of guesses remaining
 		function imageServer(guessesRemaining) {
 			return "assets/images/Hangman-" + (guessesAllowed-guessesRemaining).toString() + ".png";
 		}
 
+		// game object
 		var Hangman = {
 			"numWins":0,
 			"guessesRemaining":guessesAllowed,
 			"lettersGuessed":[],
-			"wordsGuessed":0,
+			"wrongLettersGuessed":[],
 			"wordArray": [],
-			currentWord: function () {
-				return wordList[this.numWins];
-			},
-			initializeWordArray: function() {
+			"wordList_copy": wordList.slice(),
+			"currentWord": "",
+			initializeWordArray: function() { // creates a new word array for display
 				this.wordArray = [];
-				for (var i = 0; i < this.currentWord().length; i++) {
-					this.wordArray.push("_");
+				for (var i = 0; i < this.currentWord.length; i++) {
+					if (i === 0) {
+						this.wordArray.push(this.currentWord[0]);
+					}
+					else {
+						this.wordArray.push("_");
+					}
 				}
 			},
-			updateWordArray: function(letter) {
-				for (var i = 0; i < this.currentWord().length; i++) {
-					if (letter === this.currentWord()[i]) {
+			updateWordArray: function(letter) { // updates word array after correct letter guessed
+				for (var i = 0; i < this.currentWord.length; i++) {
+					if (letter === this.currentWord[i]) {
 						this.wordArray[i] = letter;
 					}
 				}
 			},
-			displayWord: function() {
+			chooseRandomWord: function() { // sets value of current word to random word from list
+				var randomIndex = Math.floor(Math.random()*(this.wordList_copy.length+1));
+				this.currentWord = this.wordList_copy.splice(randomIndex,1)[0];
+			},
+			displayWord: function() { // display the word array on screen
 				return this.wordArray.join(" ");
 			},
-			winState: function() {
+			winState: function() { // returns whether all letters in word have been guessed
 				return !this.wordArray.includes("_");
 			},
-			reset: function() {
+			updateDisplay: function() {
+				$("#win-count").html(this.numWins);
+				$("#guesses-remaining").html(this.guessesRemaining);
+				$("#word-to-guess").html(this.displayWord());
+				$("#guessed-letters").html(this.wrongLettersGuessed.join(", "));
+				$("#hangman-image").attr("src",imageServer(this.guessesRemaining));
+				$("#definition").html("Definition: " + words[this.currentWord.toLowerCase()]);
+			},
+			reset: function() { // reset the number of wins and the word list
+				this.numWins = 0;
+				this.wordList_copy = wordList.slice();
+				$("#instructions").html("Press any key to get started.");
+			},
+			newGame: function() { // starts up a new game with a new word
 				this.guessesRemaining = guessesAllowed;
-				this.wordsGuessed = 0;
 				this.lettersGuessed = [];
+				this.wrongLettersGuessed = [];
+				this.chooseRandomWord();
 				this.initializeWordArray();
 			},
 		};
 
 		function playGame() {
 
-			function updateDisplay() {
-				$("#win-count").html(Hangman.numWins);
-				$("#guesses-remaining").html(Hangman.guessesRemaining);
-				$("#word-to-guess").html(Hangman.displayWord());
-				$("#guessed-letters").html(Hangman.lettersGuessed.join(", "));
-				$("#hangman-image").attr("src",imageServer(Hangman.guessesRemaining));
-			}
-
-			Hangman.initializeWordArray();
-			updateDisplay();
-			$("#instructions").html("Press any key to get started.");
-
-
+			// code to update the game when a key is pressed
 			$(document).keyup(function(e) {
-				var currentWord = Hangman.currentWord();
-				var guess = String.fromCharCode(e.which);
-				var letterIndex = currentWord.indexOf(e.which);
 
-				// if guessed letter is not in the alphabet
+				var guess = String.fromCharCode(e.which);
+
+				// if guessed letter is not in the alphabet, display message and decrement guesses
 				if (alphabet.indexOf(guess) === -1) { 
-					$("#instructions").html("Only guesses in the standard alphabet are allowed."); 
+					$("#instructions").html("Try a letter in the standard alphabet.");
+					Hangman.guessesRemaining--;
 				}
-				// if guessed letter has already been guessed
+				// // if guessed letter has already been guessed, ask user to try again
 				else if (Hangman.lettersGuessed.indexOf(guess) != -1) { 
 					$("#instructions").html("You've already guessed that letter. Please guess another letter.");
 				}
-				// if guessed letter is in the current word
-				else if (Hangman.currentWord().indexOf(guess) != -1) {
+				// if guessed letter is in the current word, update the word array and letters guessed
+				else if (Hangman.currentWord.indexOf(guess) != -1) {
 					Hangman.updateWordArray(guess);
+					Hangman.lettersGuessed.push(guess)
 					$("#instructions").html("Nice job!");
 				}
-				// if guessed letter is not in current word
+				// if guessed letter is not in current word, decrement guesses
 				else {
 					Hangman.lettersGuessed.push(guess);
+					Hangman.wrongLettersGuessed.push(guess);
 					$("#instructions").html("Try again.");
 					Hangman.guessesRemaining--;
 				}
-				// if player has run out of guesses
+				// if player has run out of guesses, start up a new game and set wins to 0
 				if (Hangman.guessesRemaining === 0) {
-					updateDisplay();
-					alert("Sorry, you're out of luck! Try again.");
-					window.setTimeout(function() {Hangman.reset(); updateDisplay();
-					$("#instructions").html("Press any key to get started.");}, 2000);
+					Hangman.updateDisplay();
+					alert("Sorry, you're out of luck! The word was "+Hangman.currentWord+"."); 
+					Hangman.reset();
+					Hangman.newGame();
 				}
-				// if the word has been correctly guessed
+				// if the word has been correctly guessed, increase win count and start up a new game
 				if (Hangman.winState() === true) {
-					$("#correct-guess").html("Last word guessed: " + Hangman.currentWord())
+					$("#correct-guess").html("Last word guessed: " + Hangman.currentWord);
 					if (Hangman.numWins+1 < maxWins) {
 						Hangman.numWins++;
-						Hangman.reset();
-						$("#instructions").html("Press any key to get started.");
+						Hangman.newGame();
 					}
 					else {
 						alert("You've correctly guessed all the words! Game will be reset.");
 						Hangman.reset();
-						Hangman.numWins = 0;
+						Hangman.newGame();
 					}
 
 				}
 
-				updateDisplay();
+				// update the display with new variable values
+				Hangman.updateDisplay();
 
-				console.log("Guess: ",guess);
-				console.log("Word array: ",Hangman.wordArray);
-				console.log("Letters guessed: ",Hangman.lettersGuessed);
-				console.log("Guesses remaining: ",Hangman.guessesRemaining);
-				console.log("Game won?: ",Hangman.winState());
+				// log the word for testing purposes
+				console.log("Current word: ",Hangman.currentWord);
 
 		})
 
+		// resets the game
 		$("#reset").on("click", function() {
+			alert("The word was " + Hangman.currentWord + ".");
+			Hangman.newGame();
 			Hangman.reset();
-			Hangman.numWins = 0;
-			Hangman.initializeWordArray();
-
-			updateDisplay();
-		})
+			Hangman.updateDisplay();
+		});
 
 	};
 
-		
-	$(document).ready(playGame);
+
+// code for playing the game		
+	$(document).ready( function() {
+		Hangman.newGame(); // start up wth first game
+		Hangman.updateDisplay(); // update the game display
+		$("#instructions").html("Press any key to get started.");
+		playGame(); // play the Game!
+	}
+	);
 
 
 	</script>
